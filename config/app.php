@@ -150,7 +150,8 @@ return [
     'vehicle_api_key'    => '8698297b2221ab61b95a627220910b46',
     'vehicle_singnature'=> hash('sha256','8698297b2221ab61b95a627220910b46'.'5e35e84859'.Carbon::now()->timestamp),
 
-
+    'tour_api_key'    => '9dbdbe14ff7e278b4e1abd0caf1c5a4c',
+    'tour_singnature' => hash('sha256','9dbdbe14ff7e278b4e1abd0caf1c5a4c'.'c474a8e153'.Carbon::now()->timestamp),
 
     'providers' => [
 

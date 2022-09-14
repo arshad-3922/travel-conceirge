@@ -14,6 +14,7 @@ use App\Http\Resources\CustomerReviewResource;
 use App\Http\Resources\GuestResource;
 use App\Http\Resources\HotelDetailResource;
 use App\Http\Resources\HotelResource;
+use App\Http\Resources\TourResource;
 
 //models
 use App\Models\CustomerReview;
@@ -23,13 +24,15 @@ use App\Models\Hotel;
 use App\Models\HotelCategory;
 use App\Models\HotelDetail;
 use App\Models\RoomBookingRate;
+use App\Models\Tour;
 use App\Models\UserGuest;
+use App\Models\Category;
 
 //libaray
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 
 
 class HotelController extends BaseController
@@ -43,21 +46,35 @@ class HotelController extends BaseController
    {
        $this->hotelApi        = config('app.hotel_api_key');
        $this->hotelSingnature = config('app.hotel_singnature');
+       $this->middleware(function ($request, $next) {
+        $this->user = Auth::user();
+        if($this->user->is_subscribe == 0){
+          return $this->sendError(__('responseMessages.notStepCompleted'), false);
+        }
+        else{
+          return $next($request);
+        }
+    });
    }
 
    public function getPlaces(Request $request)
    {
+      //dd($request->all());
         if($request->place_id && $request->place_id == 1 || 4){
-          $places  = Hotel::where('ranking','<=',10)->paginate($request->entries);
+          // $places  = Hotel::where('ranking','<=',10)->paginate($request->entries);
+          $places  = Tour::with('tour_details','tour_images','tour_like')->paginate($request->entries);
         }
         if($request->place_id && $request->place_id == 3){
-          $places  = Hotel::where('ranking','<=',10)
-          ->where('s2c','=',4)->paginate($request->entries);
+          // $places  = Hotel::where('ranking','<=',10)
+          // ->where('s2c','=',4)->paginate($request->entries);
+          $places  = Tour::with('tour_details','tour_images','tour_like')->paginate($request->entries);
         }
         if($request->place_id && $request->place_id == 2){
-          $places  = Hotel::paginate($request->entries);
+          $hotels  = Hotel::paginate($request->entries);
+          $hotels  = HotelResource::collection($hotels); 
+          return $this->sendResponse($hotels, __('responseMessages.hotelFeatched'));
         }
-        $places  = HotelResource::collection($places);
+          $places  = TourResource::collection($places);
         return $this->sendResponse($places, __('responseMessages.placeFeatched'));
    }
 
@@ -67,7 +84,7 @@ class HotelController extends BaseController
         if($request->search)
           {
             $places  = Hotel::where('name', 'like', "%" .$request->search. "%")->paginate($request->entries);
-            $categories =  HotelCategory::where('description', 'like', "%" .$request->search. "%")->paginate($request->entries);
+            $categories =  Category::where('name', 'like', "%" .$request->search. "%")->paginate($request->entries);
             $other_places  =  Hotel::where('name', 'like', "%" .$request->search. "%")
               ->whereHas('country',function($query) use($request) {
                       $query->orWhere('description', 'like', "%" .$request->search. "%");
@@ -78,7 +95,7 @@ class HotelController extends BaseController
           return $this->sendResponse(['categories'=>$categories,'explore_places'=>$places,'other_places'=>$other_places], __('responseMessages.searchResults'));
           }
         else{
-          $categories    = HotelCategory::where('description','!=',null)->paginate($request->entries);
+          $categories    = Category::paginate($request->entries);
           $places        = Hotel::whereHas('country')->inRandomOrder()->paginate($request->entries);
           $categories    = CategoryResource::collection($categories);
           $other_places  = HotelResource::collection($places);
@@ -135,7 +152,13 @@ class HotelController extends BaseController
             if($hotelDetail == null){
               return $this->sendError(__('responseMessages.hotelNotFound'), false);
             }
-            if(isset($hotelDetail->hotel_extra_info)){
+            if(isset($hotelDetail->hotel_extra_info) && isset($hotelDetail->room_details)){
+              foreach($hotelDetail->room_details as $room){
+                  for($i=0; $i<count($hotelDetail->hotel_images); $i++){
+                   // return $hotelDetail->hotel_images;
+                      $room['image']= $hotelDetail->hotel_images[$i]->path;
+                  }
+              }
               $hotelDetail  = new HotelDetailResource($hotelDetail);
               return $this->sendResponse($hotelDetail, __('responseMessages.hotelFeatched'));
             }
@@ -206,9 +229,10 @@ class HotelController extends BaseController
 
      public function checkHotelAvailablity(AvailablityRequest $request)
      {
-        
-         $endPoint = "https://api.test.hotelbeds.com/hotel-api/1.0/hotels";
 
+         $hotelCodes = Hotel::where('name', 'like', "%" .$request->hotel_name. "%")->pluck('code');
+         if(count($hotelCodes)){
+         $endPoint = "https://api.test.hotelbeds.com/hotel-api/1.0/hotels";
          $requestBody = array(
            'stay'=>
             array(
@@ -223,12 +247,10 @@ class HotelController extends BaseController
             )],
             'hotels'=>
             array(
-              'hotel'    => $request->hotel_id
+              'hotel'    => $hotelCodes
             )
          ); 
-
-         //return json_encode($requestBody);
-
+        
          $headers = array(
           'Api-key'           => $this->hotelApi,
           'X-Signature'       => $this->hotelSingnature,
@@ -236,33 +258,38 @@ class HotelController extends BaseController
          );
 
          try{
-
+          
           $response = Http::withBody(
             json_encode($requestBody),'application/json',
            )->withHeaders($headers)->post($endPoint);
            $responseBody = json_decode($response->getBody(), true);
-            return $responseBody;
-           if(isset($responseBody) && $responseBody['hotels'] > 1){
+           return $responseBody;
+           if(isset($responseBody['hotels']) && $responseBody['hotels']['total']  >= 1){
             $hotles  = $responseBody['hotels'];
-
             //update hotel & rooms rates
             $this->updateHotelRates($hotles);
-
             $hotelIds = array(); 
             foreach($hotles['hotels'] as $hotel)
             {
               $hotelIds[] = $hotel['code'];
             } 
-            $hotles  = Hotel::whereIn('code',$hotelIds)->whereHas('country')->paginate(10);
+            $hotles  = Hotel::whereIn('code',$hotelIds)->whereHas('country',function($query)use($request){
+                      $query->where('description', 'like', "%" .$request->city_country. "%");
+            })->paginate(10);
             $hotles  = HotelResource::collection($hotles);
             return $this->sendResponse($hotles, __('responseMessages.fetchHotels')); 
          }else{
-          return $this->sendResponse(true, __('responseMessages.hotelNotFound')); 
+          return $this->sendError(__('responseMessages.hotelNotFound'), false);
          }
          }catch(\Exception $error){
          
             return $error->getMessage();
          }
+
+         }else{
+          return $this->sendError(__('responseMessages.hotelNotFound'), false);
+         }
+
          
       }
 
@@ -334,7 +361,7 @@ class HotelController extends BaseController
         'destination'       =>$data['destination'],
         'zone'              =>$data['zone'],
         'categoryGroup'     =>$data['categoryGroup'],
-        'chain'             =>$data['chain'],
+        'chain'             =>isset($data['chain']) ? $data['chain'] : null,
         'accommodationType' =>$data['accommodationType'],
         'postalCode'        =>$data['postalCode'],
       );

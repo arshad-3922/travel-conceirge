@@ -11,6 +11,7 @@ class FavoriteHotel extends Model
 
     protected $fillable = [
         'user_id',
-        'hotel_id'
+        'hotel_id',
+        'is_like'
     ];
 }

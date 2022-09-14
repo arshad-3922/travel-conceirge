@@ -60,4 +60,6 @@ class HotelRoom extends Model
     {
         return $this->attributes['roomStays'] = json_decode($roomStays);
     }
+
+
 }

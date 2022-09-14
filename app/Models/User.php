@@ -30,7 +30,9 @@ class User extends Authenticatable {
 		'state',
 		'zip_code',
 		'password',
-		'image'
+		'image',
+		'latitude',
+		'longitude'
 	];
 
 	//protected $appends = ['coins'];
@@ -52,11 +54,26 @@ class User extends Authenticatable {
 	 */
 	protected $casts = [
 		'email_verified_at' => 'datetime',
+		'latitude'		=> 'double',
+		'longitude'		=> 'double'
 	];
+
+
+	public static function boot()
+    {
+        parent::boot();
+        self::creating(function ($model) {
+            $model->uuid = \Str::uuid();
+        });
+    }
 	
 		
 	public function getImageAttribute($value){
-        return asset("/assets/upload/user/{$value}");
+		if(!$value){
+		 return asset("/assets/upload/user/invite.png");
+		}else{
+			return asset("/assets/upload/user/{$value}");
+		}
     }
 
 	public function user_role()

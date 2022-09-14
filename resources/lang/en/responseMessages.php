@@ -148,4 +148,12 @@ return [
     'fetchSubscription'                         => 'Subscriptions Fetch Successfully',
     'cancelSubscription'                        => 'Subscriptions Cancel Successfully',
     'fetchBookings'                             => 'Bookings Fetch Successfully',
+    'notStepCompleted'                          => 'First You need to complete your profile',
+    'toursFetch'                                => 'Tours Fetch Successfully',
+    'favoriteTour'                              => 'Tour Favorite Successfully',
+    'tourNotFound'                              => 'No record found try an other',
+    'fetchTravelers'                            => 'Travelers Fetch Successfully',
+    'inviteSend'                                => 'Invite Send Successfully',
+    'fetchInvites'                              => 'Invites Fetch Successfully',
+    'requestUpdateStatus'                       => 'Request Status Update Successfully',
 ];

@@ -14,7 +14,8 @@ class HotelDetailResource extends JsonResource
      */
     public function toArray($request)
     {
-       // return $this->room_details;
+        
+
         return [
             'id'            => $this->code,
             'name'          => $this->name,

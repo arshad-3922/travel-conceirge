@@ -26,7 +26,7 @@ class AvailablityRequest extends FormRequest
         return [
             'checkin_date'  => ['required','date','after_or_equal:now'],
             'checkout_date' => ['required','date','after:checkin_date'],
-            'hotel_id'      => ['required'],
+            'hotel_name'    => ['required'],
         ];
     }
 }

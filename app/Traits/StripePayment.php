@@ -19,8 +19,8 @@ trait StripePayment
 				'card' => [
 					'number' 	=> $card[0],
 					'exp_month' => $card_expiry[0],
-					'exp_year' => $card_expiry[1],
-					'cvc'	 => $cvv
+					'exp_year'  => $card_expiry[1],
+					'cvc'	 	=> $cvv
 				]
 			]);
 			

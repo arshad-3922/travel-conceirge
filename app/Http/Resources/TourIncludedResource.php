@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class RoomResource extends JsonResource
+class TourIncludedResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,13 +14,9 @@ class RoomResource extends JsonResource
      */
     public function toArray($request)
     {
-
-      //  dd($this->image);
+        
         return [
-            'id'            => $this->roomCode,
-            'title'         => $this->type->description->content,
-            'details'       => isset($this->room_rates) ? RoomDetailResource::collection($this->room_rates) : "",
-            'image'         => $this->image
+            'name' => isset($this->name) ? $this->name : null
         ];
     }
 }

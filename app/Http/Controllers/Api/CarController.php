@@ -8,6 +8,7 @@ use App\Http\Resources\CarResource;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class CarController extends BaseController
@@ -20,6 +21,18 @@ class CarController extends BaseController
     {
         $this->vehicleApi        = config('app.vehicle_api_key');
         $this->vehicleSingnature = config('app.vehicle_singnature');
+
+        $this->middleware(function ($request, $next){
+          $this->user = Auth::user();
+          if($this->user->is_subscribe == 0){
+            return $this->sendError(__('responseMessages.notStepCompleted'), false);
+          }
+          else{
+            return $next($request);
+          }
+      });
+
+
     }
        
     public function index(Request $request){
@@ -51,10 +64,10 @@ class CarController extends BaseController
           try{
             $response = Http::withHeaders($headers)->get($endPoint);
             $responseBody = json_decode($response->getBody(), true);
-
+            //return $responseBody;
             if(isset($responseBody['services']) && $responseBody != null){
               $search_vehicles =  $this->storeCarDetails($responseBody);
-              $vehicles  = Vehicle::get();
+              $vehicles  = Vehicle::where('transferType','!=','SHARED')->get();
               $vehicles  = CarResource::collection($vehicles);
               return $this->sendResponse($vehicles, __('responseMessages.fetchCars')); 
             }else{
@@ -71,10 +84,10 @@ class CarController extends BaseController
     public function getCarsByFilter(Request $request)
     {     
           $vehiclesArr = []; 
-          $vehicles = Vehicle::get();
+          $vehicles  = Vehicle::where('transferType','!=','SHARED')->get();
           foreach($vehicles as $value){
                 $charges = json_decode($value->price);
-                $charges = $charges->totalAmount;
+                $charges =  intval($charges->totalAmount);
                 //dd($charges);
                 if($charges == $request->min_rate || $charges == $request->max_rate){
                       $vehiclesArr[] = $value;

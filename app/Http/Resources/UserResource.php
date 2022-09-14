@@ -26,6 +26,7 @@ class UserResource extends JsonResource
             'city'          => $this->city,
             'state'         => $this->state,
             'zip_code'      => $this->zip_code,
+            'is_subscribe'  => $this->is_subscribe,
             'image'         => $this->image,
             'token'         => (isset($this->token)) ? $this->token: null,
         ];

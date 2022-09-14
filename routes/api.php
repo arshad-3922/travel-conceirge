@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +41,7 @@ Route::group(['prefix'=>'auth','middleware' => ['json.response', 'localization']
     Route::post('/user/changePassword', [App\Http\Controllers\Api\AuthController::class, 'changeUserPassword'])->name('changeUserPassword')->middleware('auth:api');
     Route::post('updateCommission', [App\Http\Controllers\Api\AuthController::class, 'updateAdminCommission'])->name('updateAdminCommission')->middleware('auth:api');
     Route::get('get-countries', [App\Http\Controllers\Api\AuthController::class, 'getCountries'])->name('getCountries');
+    Route::get('get-invites', [App\Http\Controllers\Api\AuthController::class, 'getInvites'])->name('getInvites')->middleware('auth:api');
     Route::get('get-subscriptions', [App\Http\Controllers\Api\AuthController::class, 'getSubsriptions'])->name('getSubsriptions');
 
 });
@@ -83,7 +85,7 @@ Route::group(['prefix' => 'cmss','middleware'=>['auth:api']],function(){
 });
 
 
-//users routes
+//user routes
 Route::group(['prefix' => 'user','middleware'=>['auth:api']],function(){
 //hotel apis
 Route::group(['prefix' => 'hotels'],function(){
@@ -110,6 +112,24 @@ Route::group(['prefix' =>'cars'],function(){
     Route::post('confirm-booking',[App\Http\Controllers\Api\CarController::class, 'confirmBooking'])->name('cars.confirm-booking');
 });
 
+
+//tours apis
+Route::group(['prefix' =>'tours'],function(){
+    Route::get('/',[App\Http\Controllers\Api\TourController::class, 'index'])->name('tours.index');
+    Route::get('details/{id}',[App\Http\Controllers\Api\TourController::class, 'tourDetail'])->name('tours.tour-details');
+    Route::post('fovirate',[App\Http\Controllers\Api\TourController::class, 'makeFovirate'])->name('tours.make-fovirate');
+    Route::post('tour-availablity',[App\Http\Controllers\Api\TourController::class, 'tourAvailability'])->name('tours.tour-avaiablity');
+    Route::post('confirm-booking',[App\Http\Controllers\Api\TourController::class, 'confirmBooking'])->name('tours.confirm-booking');
+    Route::get('booking-details/{id}',[App\Http\Controllers\Api\TourController::class, 'tourDetail'])->name('tours.tour-details');
+});
+
+//travelers
+Route::group(['prefix' =>'travelers'],function(){
+    Route::get('/',[App\Http\Controllers\Api\TravelersController::class, 'index'])->name('travelers.index');
+    Route::post('invite',[App\Http\Controllers\Api\TravelersController::class, 'inviteTravelar'])->name('travelers.invite');
+    Route::post('change-invite-status',[App\Http\Controllers\Api\TravelersController::class, 'updateStatus'])->name('travelers.change-invite-status');
+});
+
 //payments
 Route::group(['prefix' =>'payments'],function(){
     Route::get('/',[App\Http\Controllers\Api\UserController::class, 'paymentsLogs'])->name('payments.index');
@@ -126,7 +146,7 @@ Route::group(['prefix' =>'subscriptions'],function(){
 
 
 
-Route::post('find-booking',[App\Http\Controllers\Api\CarController::class,'fetchData']);
+Route::post('add-tour-details',[App\Http\Controllers\Api\TourController::class,'addTourDetails']);
 
 
 

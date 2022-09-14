@@ -6,9 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Hotel;
 use App\Models\HotelCountry;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use DateTime;
 use App\Models\User;
 use App\Models\HotelBoard;
 use App\Models\HotelSegment;
@@ -18,6 +15,12 @@ use App\Models\HotelMinMaxRate;
 use App\Models\RoomBookingRate;
 use App\Models\Vehicle;
 use App\Models\VehicleImage;
+use App\Models\TourBooking;
+
+
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+use DateTime;
 
 // use Ixudra\Curl\Facades\Curl;
 
@@ -372,6 +375,23 @@ class BaseController extends Controller
 
              return $confirmBooking->reference;
         }
+
+        
+        public function storeTourBookingDetails($data)
+        {   
+
+             $data['dateFrom'] = $data['activities'][0]['dateFrom']; 
+             $data['dateTo']   = $data['activities'][0]['dateTo']; 
+             $data['paxes']   = $data['activities'][0]['paxes'];     
+             $tourBooking = TourBooking::create($data);
+             if($tourBooking){
+                return $tourBooking->reference;
+             }else{
+                false;
+             }
+        }
+
+
 
        
     // public function sendMessage($phone, $message) {

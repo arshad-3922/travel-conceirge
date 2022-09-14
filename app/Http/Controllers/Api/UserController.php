@@ -17,12 +17,16 @@ class UserController extends BaseController
     {
         //dd($request->all());
         if(request()->filled('from') && request()->filled('to')) {
-          $payments = Payment::where(function ($q) {
+          $payments = Payment::whereHas('user_subscription',function($query){
+            $query->where("user_id",auth()->user()->id);      
+          })->where(function ($q) {
                 $q->whereDate('created_at','>=', request('from'))
                 ->whereDate('created_at', '<=', request('to'));
             })->paginate($request->entries);
         }else{
-          $payments = Payment::where("user_id",auth()->user()->id)->paginate($request->entries);
+          $payments = Payment::whereHas('user_subscription',function($query){
+            $query->where("user_id",auth()->user()->id);      
+          })->paginate($request->entries);
          }
           $payments = PaymentResource::collection($payments);
         return $this->sendResponse($payments, __('responseMessages.fetchPayments')); 

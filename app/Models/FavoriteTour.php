@@ -5,12 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class UserSubsription extends Model
+class FavoriteTour extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'subscription_id'
+        'tour_id',
+        'is_like'
+    ];
+
+
+    protected $casts = [
+        'is_like' => 'integer'
     ];
 }

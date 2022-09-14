@@ -22,7 +22,7 @@ use Mail;
 use Hash;
 use App\Mail\ForgotCode;
 use App\Mail\ContactUs;
-
+use App\Models\TravelerInvite;
 //Libraries
 
 use App\Services\DashboardService;
@@ -50,7 +50,7 @@ class AuthController extends BaseController
     public function login(Request $request)
     {
         //dd($request->all());
-        if($request->device_id && $request->device_type && $request->role == "user")
+        if($request->device_id && $request->device_type)
         {
             User::where('email', $request->email)->update([
             'device_id'=>$request->device_id,
@@ -223,6 +223,12 @@ class AuthController extends BaseController
     }
 
 
+    public function getInvites()
+    {
+        $invites  = TravelerInvite::where('recipient_id',auth()->user()->id)->get();
+        return $this->sendResponse($invites, __('responseMessages.fetchInvites'));
+    }
+
     public function adminProfile(Request $request)
     {
 
@@ -245,23 +251,16 @@ class AuthController extends BaseController
     public function updateProfile(Request $request)
     {   
 
-        ///dd($request->all());
-        $storeUpdate = null;
         if(isset($request->image) ||  $request->image != null)
         {
-            $image = $this->fileUpload($request->image,'user');
-            //dd($image);
+            $profile = $this->fileUpload($request->image,'user');
             $profileUpdated = User::where('id', auth()->user()->id)->update([
-                'image'    => $image
+                'image'    => $profile
             ]);
         }
-        $profileUpdated = $this->userServiceProvider::updateProfile($request);
-
-        if($profileUpdated){
+            $profileUpdated = $this->userServiceProvider::updateProfile($request);
             return $this->sendResponse($profileUpdated, __('responseMessages.profileUpdated'));
-        }
-
-        return $this->sendError(__('responseMessages.errorEditingProfile'), false);
+    
       }
 
       public function getCountries()
